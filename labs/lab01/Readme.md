@@ -60,7 +60,7 @@
 
 #### Общие настройки:  
 - **ISIS Process:** `UNDERLAY`  
-- **NET Address:** `49.0001.<device-id>.00`  
+- **NET Address:** `49.0001.<Loopback>.00`  
 - **Уровень:** Level-2 только  
 - **Метрика:** Ширина (wide) метрика  
 - **Hello-таймеры:**  
@@ -102,3 +102,114 @@
 | **Leaf-3** | Eth1/1    | К Spine-1  | 10.0.0.5/31    | ISIS ptp, metric 10     |
 |            | Eth1/2    | К Spine-2  | 10.0.0.11/31   | ISIS ptp, metric 10     |
 |            | Lo0       | Loopback   | 10.255.255.13/32| Passive, metric 1      |
+
+
+## 4. Конфигурация интерфейсов 
+
+### 4.1. SPINE-1 
+```
+SPINE-1#show running-config interfaces ethernet 1
+interface Ethernet1
+   description TO-LEAF-1
+   mtu 9214
+   no switchport
+   ip address 10.0.0.0/31
+SPINE-1#show running-config interfaces ethernet 2
+interface Ethernet2
+   description TO-LEAF-2
+   mtu 9214
+   no switchport
+   ip address 10.0.0.2/31
+SPINE-1#show running-config interfaces ethernet 3
+interface Ethernet3
+   description TO-LEAF-3
+   mtu 9214
+   no switchport
+   ip address 10.0.0.4/31
+SPINE-1#show running-config interfaces loopback 0
+interface Loopback0
+   ip address 10.255.255.1/32
+
+```
+### 4.2. SPINE-2
+```
+SPINE-2#show running-config interfaces ethernet 1
+interface Ethernet1
+   description TO-LEAF-1
+   mtu 9214
+   no switchport
+   ip address 10.0.0.6/31
+SPINE-2#show running-config interfaces ethernet 2
+interface Ethernet2
+   description TO-LEAF-2
+   mtu 9214
+   no switchport
+   ip address 10.0.0.8/31
+SPINE-2#show running-config interfaces ethernet 3
+interface Ethernet3
+   description TO-LEAF-3
+   mtu 9214
+   no switchport
+   ip address 10.0.0.10/31
+SPINE-2#show running-config interfaces loopback 0
+interface Loopback0
+   ip address 10.255.255.2/32
+
+```
+### 4.3. LEAF-1
+```
+LEAF-1#show running-config interfaces ethernet 1
+interface Ethernet1
+   description TO-SPINE-1
+   mtu 9214
+   no switchport
+   ip address 10.0.0.1/31
+LEAF-1#show running-config interfaces ethernet 2
+interface Ethernet2
+   description TO-SPINE-2
+   mtu 9214
+   no switchport
+   ip address 10.0.0.7/31
+LEAF-1#show running-config interfaces loopback 0
+interface Loopback0
+   ip address 10.255.255.11/32
+
+```
+### 4.4. LEAF-2
+```
+LEAF-2#show running-config interfaces ethernet 1
+interface Ethernet1
+   description TO-SPINE-1
+   mtu 9214
+   no switchport
+   ip address 10.0.0.3/31
+LEAF-2#show running-config interfaces ethernet 2
+interface Ethernet2
+   description TO-SPINE-2
+   mtu 9214
+   no switchport
+   ip address 10.0.0.9/31
+LEAF-2#show running-config interfaces loopback 0
+interface Loopback0
+   ip address 10.255.255.12/32
+
+```
+### 4.5. LEAF-3
+```
+LEAF-3#show running-config interfaces ethernet 1
+interface Ethernet1
+   description TO-SPINE-1
+   mtu 9214
+   no switchport
+   ip address 10.0.0.5/31
+LEAF-3#show running-config interfaces ethernet 2
+interface Ethernet2
+   description TO-SPINE-2
+   mtu 9214
+   no switchport
+   ip address 10.0.0.11/31
+LEAF-3#show running-config interfaces loopback 0
+interface Loopback0
+   ip address 10.255.255.13/32
+
+```
