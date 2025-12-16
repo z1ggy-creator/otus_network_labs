@@ -7,7 +7,7 @@
 ### Настройка Underlay сети  
 - [ ] Настройка интерфейсов (порт, IP, MTU)  
 - [ ] Настройка Loopback
-- [ ] Настройка Hosname
+- [ ] Настройка Hostname
 
 
 ### Тестирование и проверка  
@@ -52,25 +52,25 @@
 
 ### 3 Таблица интерфейсов  
 
-| Устройство | Интерфейс | Назначение | IP адрес       | ISIS настройки          |
-|------------|-----------|------------|----------------|-------------------------|
-| **Spine-1**| Eth1/1    | К Leaf-1   | 10.0.0.0/31    | ISIS ptp, metric 10     |
-|            | Eth1/2    | К Leaf-2   | 10.0.0.2/31    | ISIS ptp, metric 10     |
-|            | Eth1/3    | К Leaf-3   | 10.0.0.4/31    | ISIS ptp, metric 10     |
-|            | Lo0       | Loopback   | 10.255.255.1/32| Passive, metric 1       |
-| **Spine-2**| Eth1/1    | К Leaf-1   | 10.0.0.6/31    | ISIS ptp, metric 10     |
-|            | Eth1/2    | К Leaf-2   | 10.0.0.8/31    | ISIS ptp, metric 10     |
-|            | Eth1/3    | К Leaf-3   | 10.0.0.10/31   | ISIS ptp, metric 10     |
-|            | Lo0       | Loopback   | 10.255.255.2/32| Passive, metric 1       |
-| **Leaf-1** | Eth1/1    | К Spine-1  | 10.0.0.1/31    | ISIS ptp, metric 10     |
-|            | Eth1/2    | К Spine-2  | 10.0.0.7/31    | ISIS ptp, metric 10     |
-|            | Lo0       | Loopback   | 10.255.255.11/32| Passive, metric 1      |
-| **Leaf-2** | Eth1/1    | К Spine-1  | 10.0.0.3/31    | ISIS ptp, metric 10     |
-|            | Eth1/2    | К Spine-2  | 10.0.0.9/31    | ISIS ptp, metric 10     |
-|            | Lo0       | Loopback   | 10.255.255.12/32| Passive, metric 1      |
-| **Leaf-3** | Eth1/1    | К Spine-1  | 10.0.0.5/31    | ISIS ptp, metric 10     |
-|            | Eth1/2    | К Spine-2  | 10.0.0.11/31   | ISIS ptp, metric 10     |
-|            | Lo0       | Loopback   | 10.255.255.13/32| Passive, metric 1      |
+| Устройство | Интерфейс | Назначение | IP адрес       |
+|------------|-----------|------------|----------------|
+| **Spine-1**| Eth1/1    | К Leaf-1   | 10.0.0.0/31    |
+|            | Eth1/2    | К Leaf-2   | 10.0.0.2/31    |
+|            | Eth1/3    | К Leaf-3   | 10.0.0.4/31    |
+|            | Lo0       | Loopback   | 10.255.255.1/32|
+| **Spine-2**| Eth1/1    | К Leaf-1   | 10.0.0.6/31    |
+|            | Eth1/2    | К Leaf-2   | 10.0.0.8/31    |
+|            | Eth1/3    | К Leaf-3   | 10.0.0.10/31   |
+|            | Lo0       | Loopback   | 10.255.255.2/32|
+| **Leaf-1** | Eth1/1    | К Spine-1  | 10.0.0.1/31    |
+|            | Eth1/2    | К Spine-2  | 10.0.0.7/31    |
+|            | Lo0       | Loopback   | 10.255.255.11/32|
+| **Leaf-2** | Eth1/1    | К Spine-1  | 10.0.0.3/31    |
+|            | Eth1/2    | К Spine-2  | 10.0.0.9/31    |
+|            | Lo0       | Loopback   | 10.255.255.12/32|
+| **Leaf-3** | Eth1/1    | К Spine-1  | 10.0.0.5/31    |
+|            | Eth1/2    | К Spine-2  | 10.0.0.11/31   |
+|            | Lo0       | Loopback   | 10.255.255.13/32|
 
 
 ## 4. Конфигурация интерфейсов 
