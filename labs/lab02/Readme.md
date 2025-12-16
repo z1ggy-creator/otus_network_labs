@@ -56,6 +56,7 @@
 
 ### 3.1. Топология  
 
+![Topology_lab02.png](Topology_lab02.png)
 
 
 ### 3.2. Параметры OSPF 
@@ -101,5 +102,50 @@
 
 ---
 ### 4. Конфигурация OSPF на устройствах 
+
+### 4.1. SPINE-1 
+```
+SPINE-1#show running-config section ospf
+interface Ethernet1
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+interface Ethernet2
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+interface Ethernet3
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+interface Loopback0
+   ip ospf area 0.0.0.0
+router ospf 1
+   router-id 10.255.255.1
+   bfd default
+   passive-interface Loopback0
+   max-lsa 12000
+```
+### 4.2. SPINE-2
+```
+
+
+```
+### 4.3. LEAF-1
+```
+
+
+```
+### 4.4. LEAF-2
+```
+
+
+```
+### 4.5. LEAF-3
+```
+
+
+```
+
+
+
+
 
 ### 5. Проверка состояния OSPF 
