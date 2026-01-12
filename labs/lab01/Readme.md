@@ -84,19 +84,19 @@
 SPINE-1#show running-config interfaces ethernet 1
 interface Ethernet1
    description TO-LEAF-1
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.0/31
 SPINE-1#show running-config interfaces ethernet 2
 interface Ethernet2
    description TO-LEAF-2
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.2/31
 SPINE-1#show running-config interfaces ethernet 3
 interface Ethernet3
    description TO-LEAF-3
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.4/31
 SPINE-1#show running-config interfaces loopback 0
@@ -109,19 +109,19 @@ interface Loopback0
 SPINE-2#show running-config interfaces ethernet 1
 interface Ethernet1
    description TO-LEAF-1
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.6/31
 SPINE-2#show running-config interfaces ethernet 2
 interface Ethernet2
    description TO-LEAF-2
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.8/31
 SPINE-2#show running-config interfaces ethernet 3
 interface Ethernet3
    description TO-LEAF-3
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.10/31
 SPINE-2#show running-config interfaces loopback 0
@@ -134,13 +134,13 @@ interface Loopback0
 LEAF-1#show running-config interfaces ethernet 1
 interface Ethernet1
    description TO-SPINE-1
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.1/31
 LEAF-1#show running-config interfaces ethernet 2
 interface Ethernet2
    description TO-SPINE-2
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.7/31
 LEAF-1#show running-config interfaces loopback 0
@@ -153,13 +153,13 @@ interface Loopback0
 LEAF-2#show running-config interfaces ethernet 1
 interface Ethernet1
    description TO-SPINE-1
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.3/31
 LEAF-2#show running-config interfaces ethernet 2
 interface Ethernet2
    description TO-SPINE-2
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.9/31
 LEAF-2#show running-config interfaces loopback 0
@@ -172,13 +172,13 @@ interface Loopback0
 LEAF-3#show running-config interfaces ethernet 1
 interface Ethernet1
    description TO-SPINE-1
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.5/31
 LEAF-3#show running-config interfaces ethernet 2
 interface Ethernet2
    description TO-SPINE-2
-   mtu 9214
+   mtu 9000
    no switchport
    ip address 10.0.0.11/31
 LEAF-3#show running-config interfaces loopback 0
