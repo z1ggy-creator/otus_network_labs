@@ -213,6 +213,14 @@ interface Loopback0
    description Router-ID & Overlay Endpoint
    ipv6 enable
    ipv6 address fd00:cafe:beef:1::1/128
+
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan udp-port 4789
+   vxlan encapsulation ipv6
+   vxlan vlan 100 vni 9100
+   vxlan vlan 200 vni 9200
+
 ```
 ```
 router bgp 65101
@@ -274,6 +282,13 @@ interface Loopback0
    description Router-ID & Overlay Endpoint
    ipv6 enable
    ipv6 address fd00:cafe:beef:1::2/128
+
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan udp-port 4789
+   vxlan encapsulation ipv6
+   vxlan vlan 100 vni 9100
+
 ```
 ```
 router bgp 65102
@@ -330,6 +345,12 @@ interface Loopback0
    description Router-ID & Overlay Endpoint
    ipv6 enable
    ipv6 address fd00:cafe:beef:1::3/128
+
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan udp-port 4789
+   vxlan encapsulation ipv6
+   vxlan vlan 200 vni 9200
 ```
 ```
 router bgp 65103
