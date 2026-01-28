@@ -1,4 +1,4 @@
-# eBGP Underlay сеть на unnumbered IPv6 L2 сервис 
+# eBGP Underlay сеть на unnumbered IPv6. L3 сервис 
 
 ---
 
@@ -6,10 +6,11 @@
 
 ### Настройка eBGP Overlay сети  
 - [ ] Настроить BGP peering между Leaf и Spine в AF l2vpn evpn
-- [ ] Настроить связанность между клиентами на уровне L2
+- [ ] Настроить связанность между клиентами на уровне L3 (в одном L3 VRF)
 
 ### Тестирование и проверка  
-- [ ] Проверка связности между клиентами
+- [ ] Проверка связности между клиентами clients-1, clients-2
+- [ ] Проверка связности между клиентами clients-1, clients-3 
 
 ---
 
@@ -38,7 +39,7 @@
 
 ### 3.1. Топология  
 
-![topology_under_over_ebgp.png](topology_under_over_ebgp.png)
+![topology_ebgp_L3_service.png](topology_ebgp_L3_service.png)
 
 ### 3.2. Параметры eBGP  
 
@@ -211,12 +212,17 @@ interface Loopback0
    ipv6 enable
    ipv6 address fd00:cafe:beef:1::1/128
 
+interface Vlan100
+   description vrf-blue
+   vrf vrf-blue
+   ip address 10.10.10.254/24
+
 interface Vxlan1
    vxlan source-interface Loopback0
    vxlan udp-port 4789
    vxlan encapsulation ipv6
-   vxlan vlan 100 vni 9100
-   vxlan vlan 200 vni 9200
+   vxlan vlan 100 vni 19100
+   vxlan vrf vrf-blue vni 3099
 
 ```
 ```
@@ -241,12 +247,7 @@ router bgp 65101
    !
    vlan 100
       rd auto
-      route-target both 65101:100
-      redistribute learned
-   !
-   vlan 200
-      rd auto
-      route-target both 65101:200
+      route-target both 65101:19100
       redistribute learned
    !
    address-family evpn
@@ -255,6 +256,12 @@ router bgp 65101
    address-family ipv6
       neighbor UNDERLAY activate
       network fd00:cafe:beef:1::1/128
+   !
+   vrf vrf-blue
+      rd 10.255.255.11:3099
+      route-target import evpn 65000:3099
+      route-target export evpn 65000:3099
+      redistribute connected
 
 ```
 
@@ -280,11 +287,17 @@ interface Loopback0
    ipv6 enable
    ipv6 address fd00:cafe:beef:1::2/128
 
+interface Vlan100
+   description vrf-blue
+   vrf vrf-blue
+   ip address 20.20.20.254/24
+
 interface Vxlan1
    vxlan source-interface Loopback0
    vxlan udp-port 4789
    vxlan encapsulation ipv6
-   vxlan vlan 100 vni 9100
+   vxlan vlan 100 vni 19200
+   vxlan vrf vrf-blue vni 3099
 
 ```
 ```
@@ -309,7 +322,7 @@ router bgp 65102
    !
    vlan 100
       rd auto
-      route-target both 65101:100
+      route-target both 65102:19200
       redistribute learned
    !
    address-family evpn
@@ -318,6 +331,12 @@ router bgp 65102
    address-family ipv6
       neighbor UNDERLAY activate
       network fd00:cafe:beef:1::2/128
+   !
+   vrf vrf-blue
+      rd 10.255.255.12:3099
+      route-target import evpn 65000:3099
+      route-target export evpn 65000:3099
+      redistribute connected
 
 ```
 
@@ -343,11 +362,17 @@ interface Loopback0
    ipv6 enable
    ipv6 address fd00:cafe:beef:1::3/128
 
+interface Vlan100
+   description vrf-blue
+   vrf vrf-blue
+   ip address 30.30.30.254/24
+
 interface Vxlan1
    vxlan source-interface Loopback0
    vxlan udp-port 4789
    vxlan encapsulation ipv6
-   vxlan vlan 200 vni 9200
+   vxlan vlan 100 vni 19300
+   vxlan vrf vrf-blue vni 3099
 ```
 ```
 router bgp 65103
@@ -371,7 +396,7 @@ router bgp 65103
    !
    vlan 200
       rd auto
-      route-target both 65101:200
+      route-target both 65103:19300
       redistribute learned
    !
    address-family evpn
@@ -380,6 +405,12 @@ router bgp 65103
    address-family ipv6
       neighbor UNDERLAY activate
       network fd00:cafe:beef:1::3/128
+   !
+   vrf vrf-blue
+      rd 10.255.255.13:3099
+      route-target import evpn 65000:3099
+      route-target export evpn 65000:3099
+      redistribute connected
 
 ```
 
@@ -388,22 +419,19 @@ router bgp 65103
 vlan 100
    name vlan-100
 !
-vlan 200
-   name vlan-200
-!
 interface Ethernet1
-   description TO-LEAF-01
    switchport trunk allowed vlan 100,200
    switchport mode trunk
-!
+
 interface Vlan100
    description vrf-blue
    ip address 10.10.10.1/24
 !
-interface Vlan200
-   description vrf-red
-   ip address 20.20.20.1/24
-
+ip routing
+!
+ip route 0.0.0.0/0 10.10.10.254
+!
+end
 ```
 ### 4.6. CLIENTS-2
 ```
@@ -413,88 +441,40 @@ vlan 100
 interface Ethernet1
    description TO-LEAF-02
    switchport access vlan 100
+!
 interface Vlan100
    description vrf-blue
-   ip address 10.10.10.2/24
+   ip address 20.20.20.1/24
+!
+no ip routing
+!
+ip route 0.0.0.0/0 20.20.20.254
 
 ```
 ### 4.6. CLIENTS-3
 ```
-vlan 200
-   name vlan-200
+vlan 100
 !
 interface Ethernet1
    description TO-LEAF-03
-   switchport access vlan 200
-interface Vlan200
-   ip address 20.20.20.2/24
+   switchport access vlan 100
+!
+interface Vlan100
+   ip address 30.30.30.1/24
+!
+ip routing
+!
+ip route 0.0.0.0/0 30.30.30.254
+!
+end
 ```
 
 ## 5. Тестирование и проверка eBGP
 
-### 5.0 Проверка eBGP OVERLAY сессий на LEAF-01
+### 5.0 Проверка eBGP маршрутов на LEAF-01
 
 ```
-LEAF-1#show bgp summary
-BGP summary information for VRF default
-Router identifier 10.255.255.11, local AS number 65101
-Neighbor                             AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
---------------------------- ----------- ------------- ----------------------- -------------- ---------- ----------
-fd00:cafe:beef::1                 65000 Established   L2VPN EVPN              Negotiated              2          2
-fd00:cafe:beef::2                 65000 Established   L2VPN EVPN              Negotiated              2          2
-fe80::5200:ff:fecb:38c2%Et2       65000 Established   IPv6 Unicast            Negotiated              3          3
-fe80::5200:ff:fed7:ee0b%Et1       65000 Established   IPv6 Unicast            Negotiated              3          3
-
-LEAF-1#show bgp evpn summary
-BGP summary information for VRF default
-Router identifier 10.255.255.11, local AS number 65101
-Neighbor Status Codes: m - Under maintenance
-  Neighbor          V AS           MsgRcvd   MsgSent  InQ OutQ  Up/Down State   PfxRcd PfxAcc
-  fd00:cafe:beef::1 4 65000           4174      4204    0    0 00:33:27 Estab   2      2
-  fd00:cafe:beef::2 4 65000           3309      3330    0    0 00:33:23 Estab   2      2
-
-```
-Видим, что сессии на лупбэк адресах установились и AFI/SAFI = L2VPN EVPN  
-
-### 5.1.0 Мак и IP  Client-1, Client-2, Client-3
-```
-CLIENTS-1#show interfaces vlan 100
-Vlan100 is up, line protocol is up (connected)
-  Hardware is Vlan, address is 5000.0072.8b31 (bia 5000.0072.8b31)
-  Description: vrf-blue
-  Internet address is 10.10.10.1/24
-  Broadcast address is 255.255.255.255
-  IP MTU 1500 bytes (default)
-  Up 2 hours, 13 minutes, 30 seconds
-
-CLIENTS-1#show interfaces vlan 200
-Vlan200 is up, line protocol is up (connected)
-  Hardware is Vlan, address is 5000.0072.8b31 (bia 5000.0072.8b31)
-  Description: vrf-red
-  Internet address is 20.20.20.1/24
-  Broadcast address is 255.255.255.255
-  IP MTU 1500 bytes (default)
-  Up 2 hours, 18 minutes, 1 second
-
---------------------------------------------------
-
-
-CLIENTS-2#show interfaces vlan 100
-Vlan100 is up, line protocol is up (connected)
-  Hardware is Vlan, address is 5000.00f6.ad37 (bia 5000.00f6.ad37)
-  Internet address is 10.10.10.2/24
-  Broadcast address is 255.255.255.255
-  IP MTU 1500 bytes (default)
-  Up 1 hour, 43 minutes, 24 seconds
-
---------------------------------------------------
-
-```
-
-### 5.1.1 Проверка маршрута на LEAF-01 Client-1 -> Client-2
-
-```
-LEAF-1(config)#show bgp evpn route-type mac-ip 5000.00f6.ad37
+LEAF-1#show bgp evpn route-type ip-prefix ipv4
 BGP routing table information for VRF default
 Router identifier 10.255.255.11, local AS number 65101
 Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
@@ -503,64 +483,149 @@ Origin codes: i - IGP, e - EGP, ? - incomplete
 AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
 
           Network                Next Hop              Metric  LocPref Weight  Path
- * >Ec    RD: 10.255.255.12:100 mac-ip 5000.00f6.ad37
+ * >      RD: 10.255.255.11:3099 ip-prefix 10.10.10.0/24
+                                 -                     -       -       0       i
+ * >Ec    RD: 10.255.255.12:3099 ip-prefix 20.20.20.0/24
                                  fd00:cafe:beef:1::2   -       100     0       65000 65102 i
- *  ec    RD: 10.255.255.12:100 mac-ip 5000.00f6.ad37
+ *  ec    RD: 10.255.255.12:3099 ip-prefix 20.20.20.0/24
                                  fd00:cafe:beef:1::2   -       100     0       65000 65102 i
-
-```
-Видим маршрут за некстхопом fd00:cafe:beef:1::2 (лиф-2) и ожидаемый AS-Path 65000 65102 через спайн.
-
-### 5.1.2 Проверка связи между Client-1 -> Client-2
-
-```
-CLIENTS-1#ping 10.10.10.2
-PING 10.10.10.2 (10.10.10.2) 72(100) bytes of data.
-80 bytes from 10.10.10.2: icmp_seq=1 ttl=64 time=632 ms
-80 bytes from 10.10.10.2: icmp_seq=2 ttl=64 time=683 ms
-80 bytes from 10.10.10.2: icmp_seq=3 ttl=64 time=855 ms
-80 bytes from 10.10.10.2: icmp_seq=4 ttl=64 time=1185 ms
-80 bytes from 10.10.10.2: icmp_seq=5 ttl=64 time=1232 ms
-
---- 10.10.10.2 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time 61ms
-rtt min/avg/max/mdev = 632.564/918.059/1232.960/249.399 ms, pipe 5, ipg/ewma 15s
-```
-Пинг проходит через Vxlan тонель поверх ipv6 фабрики. 
-
-### 5.1.3 Проверка маршрута на LEAF-01 Client-1 -> Client-3
-
-```
-LEAF-1(config)#show bgp evpn route-type mac-ip 5000.001b.5e8d
-BGP routing table information for VRF default
-Router identifier 10.255.255.11, local AS number 65101
-Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
-                    c - Contributing to ECMP, % - Pending BGP convergence
-Origin codes: i - IGP, e - EGP, ? - incomplete
-AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
-
-          Network                Next Hop              Metric  LocPref Weight  Path
- * >Ec    RD: 10.255.255.13:200 mac-ip 5000.001b.5e8d
+ * >Ec    RD: 10.255.255.13:3099 ip-prefix 30.30.30.0/24
                                  fd00:cafe:beef:1::3   -       100     0       65000 65103 i
- *  ec    RD: 10.255.255.13:200 mac-ip 5000.001b.5e8d
+ *  ec    RD: 10.255.255.13:3099 ip-prefix 30.30.30.0/24
                                  fd00:cafe:beef:1::3   -       100     0       65000 65103 i
 
 ```
-Видим маршрут за некстхопом fd00:cafe:beef:1::3 (лиф-3) и ожидаемый AS-Path 65000 65103 через спайн.
+Видим, что на LEAF-01 изучены все клиентские сети. В качестве некстхопа используются лупбэк интерфейсы. 
 
-### 5.1.4 Проверка связи между Client-1 -> Client-3
+
+### 5.1 Проверка таблицы маршрутизации на клиентах 
 
 ```
-CLIENTS-1#ping 20.20.20.2
-PING 20.20.20.2 (20.20.20.2) 72(100) bytes of data.
-80 bytes from 20.20.20.2: icmp_seq=1 ttl=64 time=258 ms
-80 bytes from 20.20.20.2: icmp_seq=2 ttl=64 time=254 ms
-80 bytes from 20.20.20.2: icmp_seq=3 ttl=64 time=256 ms
-80 bytes from 20.20.20.2: icmp_seq=4 ttl=64 time=251 ms
-80 bytes from 20.20.20.2: icmp_seq=5 ttl=64 time=250 ms
+CLIENTS-1#show ip route
 
---- 20.20.20.2 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time 52ms
-rtt min/avg/max/mdev = 250.559/254.062/258.084/2.884 ms, pipe 5, ipg/ewma 13.09s
+VRF: default
+Codes: C - connected, S - static, K - kernel,
+       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
+       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
+       N2 - OSPF NSSA external type2, B - Other BGP Routes,
+       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
+       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
+       A O - OSPF Summary, NG - Nexthop Group Static Route,
+       V - VXLAN Control Service, M - Martian,
+       DH - DHCP client installed default route,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       G  - gRIBI, RC - Route Cache Route
+
+Gateway of last resort:
+ S        0.0.0.0/0 [1/0] via 10.10.10.254, Vlan100
+
+ C        10.10.10.0/24 is directly connected, Vlan100
+
+CLIENTS-2#show ip route
+
+VRF: default
+Codes: C - connected, S - static, K - kernel,
+       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
+       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
+       N2 - OSPF NSSA external type2, B - Other BGP Routes,
+       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
+       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
+       A O - OSPF Summary, NG - Nexthop Group Static Route,
+       V - VXLAN Control Service, M - Martian,
+       DH - DHCP client installed default route,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       G  - gRIBI, RC - Route Cache Route
+
+Gateway of last resort:
+ S        0.0.0.0/0 [1/0] via 20.20.20.254, Vlan100
+
+ C        20.20.20.0/24 is directly connected, Vlan100
+
+CLIENTS-3#show ip route
+
+VRF: default
+Codes: C - connected, S - static, K - kernel,
+       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
+       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
+       N2 - OSPF NSSA external type2, B - Other BGP Routes,
+       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
+       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
+       A O - OSPF Summary, NG - Nexthop Group Static Route,
+       V - VXLAN Control Service, M - Martian,
+       DH - DHCP client installed default route,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       G  - gRIBI, RC - Route Cache Route
+
+Gateway of last resort:
+ S        0.0.0.0/0 [1/0] via 30.30.30.254, Vlan100
+
+ C        30.30.30.0/24 is directly connected, Vlan100
+
+
 ```
-Пинг так же проходит через Vxlan тонель поверх ipv6 фабрики.
+Видим что не смотря на использования одного vlan 100, у всех клиентов разные IP. Что говорит о том, что vlan 100 это разные ethernet сегменты.  
+
+### 5.2 Проверка табицы маршрутизации в vrf-blue на LEAF-01
+```
+LEAF-1#show ip route vrf vrf-blue
+
+VRF: vrf-blue
+Codes: C - connected, S - static, K - kernel,
+       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
+       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
+       N2 - OSPF NSSA external type2, B - Other BGP Routes,
+       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
+       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
+       A O - OSPF Summary, NG - Nexthop Group Static Route,
+       V - VXLAN Control Service, M - Martian,
+       DH - DHCP client installed default route,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       G  - gRIBI, RC - Route Cache Route
+
+Gateway of last resort is not set
+
+ C        10.10.10.0/24 is directly connected, Vlan100
+ B E      20.20.20.1/32 [20/0] via VTEP fd00:cafe:beef:1::2 VNI 3099 router-mac 50:00:00:03:37:66 local-interface Vxlan1
+ B E      20.20.20.0/24 [20/0] via VTEP fd00:cafe:beef:1::2 VNI 3099 router-mac 50:00:00:03:37:66 local-interface Vxlan1
+ B E      30.30.30.0/24 [20/0] via VTEP fd00:cafe:beef:1::3 VNI 3099 router-mac 50:00:00:15:f4:e8 local-interface Vxlan1
+
+
+```
+Видим что в vrf-blue клиентские маршруты установлены. В качестве некст-хоп используется адреса VTEP 
+
+### 5.3 Проверка связи между Client-1 -> Client-2
+
+```
+CLIENTS-1#ping 20.20.20.1
+PING 20.20.20.1 (20.20.20.1) 72(100) bytes of data.
+80 bytes from 20.20.20.1: icmp_seq=1 ttl=62 time=269 ms
+80 bytes from 20.20.20.1: icmp_seq=2 ttl=62 time=274 ms
+80 bytes from 20.20.20.1: icmp_seq=3 ttl=62 time=383 ms
+80 bytes from 20.20.20.1: icmp_seq=4 ttl=62 time=454 ms
+80 bytes from 20.20.20.1: icmp_seq=5 ttl=62 time=471 ms
+
+--- 20.20.20.1 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 54ms
+rtt min/avg/max/mdev = 269.366/370.662/471.539/85.977 ms, pipe 5, ipg/ewma 13.554/326.235 ms
+
+```
+Пинг проходит через Vxlan тонель поверх ipv6 фабрики.
+
+## 5.4 Проверка связи на LEAF-01 между Client-1 -> Client-3
+
+```
+CLIENTS-1#ping 30.30.30.1
+PING 30.30.30.1 (30.30.30.1) 72(100) bytes of data.
+80 bytes from 30.30.30.1: icmp_seq=1 ttl=62 time=287 ms
+80 bytes from 30.30.30.1: icmp_seq=2 ttl=62 time=290 ms
+80 bytes from 30.30.30.1: icmp_seq=3 ttl=62 time=291 ms
+80 bytes from 30.30.30.1: icmp_seq=4 ttl=62 time=333 ms
+80 bytes from 30.30.30.1: icmp_seq=5 ttl=62 time=336 ms
+
+--- 30.30.30.1 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 49ms
+rtt min/avg/max/mdev = 287.345/307.721/336.180/22.023 ms, pipe 5, ipg/ewma 12.357/299.116 ms
+
+
+```
+Пинг проходит через Vxlan тонель поверх ipv6 фабрики.
