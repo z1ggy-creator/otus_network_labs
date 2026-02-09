@@ -1,18 +1,17 @@
-# eBGP Underlay сеть на unnumbered IPv6. MultiHome
+# eBGP Underlay сеть на unnumbered IPv6. VxLAN. Routing.
 
 ---
 
 ## 1. План работ  
 
 ### Настройка Муотихоум для clients-01, clients-02
-- [ ] Подключить клиентов 2-я линками к различным Leaf
-- [ ] Настроить агрегированный канал со стороны клиента
-- [ ] Настроить multihoming для работы в Overlay сети
-- [ ] Настроить fail over group для защиты от потери аплинков у leaf
+- [ ] Разместить двух "клиентов" в разных VRF в рамках одной фабрики.
+- [ ] Настроить маршрутизацию между клиентами через внешнее устройство (граничный роутер\фаерволл\etc)
+
 
 ### Тестирование и проверка  
-- [ ] протестировать отказоустойчивость - убедиться, что связнность не теряется при отключении одного из линков
-- [ ] протестирова fail over group - убедиться, что даунлинки переходит в состояние down 
+- [ ] Проверить маршруты 5 типа на коммутаторах фабрики
+- [ ] Проверить связь между клиентами
 
 ---
 
@@ -41,7 +40,7 @@
 
 ### 3.1. Топология  
 
-![topology_ebgp_multihome.png](topology_ebgp_multihome.png)
+![topology_vxlan_routing.png](topology_vxlan_routing.png)
 
 ### 3.2. Параметры eBGP  
 
@@ -653,283 +652,18 @@ end
 ```
 ## 5. Тестирование и проверка eBGP
 
-### 5.0 Проверка eBGP маршрутов на LEAF-01
+### 5.0 Проверить маршруты 5 типа на коммутаторах фабрики
 
 ```
-LEAF-1(config-router-bgp)#show bgp evpn vni 3089
-BGP routing table information for VRF default
-Router identifier 10.255.255.11, local AS number 65101
-Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
-                    c - Contributing to ECMP, % - Pending BGP convergence
-Origin codes: i - IGP, e - EGP, ? - incomplete
-AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
-
-          Network                Next Hop              Metric  LocPref Weight  Path
- * >Ec    RD: 10.255.255.13:300 mac-ip 5000.001b.5e8d 30.30.30.1
-                                 fd00:cafe:beef:1::3   -       100     0       65000 65103 i
- *  ec    RD: 10.255.255.13:300 mac-ip 5000.001b.5e8d 30.30.30.1
-                                 fd00:cafe:beef:1::3   -       100     0       65000 65103 i
- * >      RD: 10.255.255.11:100 mac-ip 5000.0072.8b31 10.10.10.1
-                                 -                     -       -       0       i
-```
-Видим, что на LEAF-01 изучены все клиентские адреса в l3-vni 3089.
-
-
-### 5.1 Проверка таблицы маршрутизации на клиентах 
 
 ```
-CLIENTS-01#show ip route
 
-VRF: default
-Codes: C - connected, S - static, K - kernel,
-       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
-       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
-       N2 - OSPF NSSA external type2, B - Other BGP Routes,
-       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
-       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
-       A O - OSPF Summary, NG - Nexthop Group Static Route,
-       V - VXLAN Control Service, M - Martian,
-       DH - DHCP client installed default route,
-       DP - Dynamic Policy Route, L - VRF Leaked,
-       G  - gRIBI, RC - Route Cache Route
 
-Gateway of last resort:
- S        0.0.0.0/0 [1/0] via 10.10.10.254, Vlan100
 
- C        10.10.10.0/24 is directly connected, Vlan100
+### 5.1 Проверить связь между клиентами
 
- CLIENTS-02#show  ip route
-
-VRF: default
-Codes: C - connected, S - static, K - kernel,
-       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
-       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
-       N2 - OSPF NSSA external type2, B - Other BGP Routes,
-       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
-       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
-       A O - OSPF Summary, NG - Nexthop Group Static Route,
-       V - VXLAN Control Service, M - Martian,
-       DH - DHCP client installed default route,
-       DP - Dynamic Policy Route, L - VRF Leaked,
-       G  - gRIBI, RC - Route Cache Route
-
-Gateway of last resort:
- S        0.0.0.0/0 [1/0] via 30.30.30.254, Vlan300
-
- C        30.30.30.0/24 is directly connected, Vlan300
+```
 
 
 ```
  
-
-### 5.2 Проверка табицы маршрутизации в vrf-red на LEAF-01 и LEAF-03
-```
-LEAF-1(config-router-bgp)#show ip route vrf vrf-red
-
-VRF: vrf-red
-Codes: C - connected, S - static, K - kernel,
-       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
-       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
-       N2 - OSPF NSSA external type2, B - Other BGP Routes,
-       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
-       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
-       A O - OSPF Summary, NG - Nexthop Group Static Route,
-       V - VXLAN Control Service, M - Martian,
-       DH - DHCP client installed default route,
-       DP - Dynamic Policy Route, L - VRF Leaked,
-       G  - gRIBI, RC - Route Cache Route
-
-Gateway of last resort is not set
-
- C        10.10.10.0/24 is directly connected, Vlan100
- B E      30.30.30.1/32 [20/0] via VTEP fd00:cafe:beef:1::3 VNI 3089 router-mac 50:00:00:15:f4:e8 local-interface Vxlan1
-
----------------------------------------------------------------------------------------------------------------------------------------
-LEAF-3(config-router-bgp)#show ip route vrf vrf-red
-
-VRF: vrf-red
-Codes: C - connected, S - static, K - kernel,
-       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
-       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
-       N2 - OSPF NSSA external type2, B - Other BGP Routes,
-       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
-       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
-       A O - OSPF Summary, NG - Nexthop Group Static Route,
-       V - VXLAN Control Service, M - Martian,
-       DH - DHCP client installed default route,
-       DP - Dynamic Policy Route, L - VRF Leaked,
-       G  - gRIBI, RC - Route Cache Route
-
-Gateway of last resort is not set
-
- B E      10.10.10.1/32 [20/0] via VTEP fd00:cafe:beef:1::1 VNI 3089 router-mac 50:00:00:d5:5d:c0 local-interface Vxlan1
- C        30.30.30.0/24 is directly connected, Vlan300
-
-```
-Видим что в vrf-red клиентские маршруты установлены. 
-
-### 5.3 Проверка связи между Client-1 -> Client-2
-
-```
-CLIENTS-01#ping 30.30.30.1
-PING 30.30.30.1 (30.30.30.1) 72(100) bytes of data.
-80 bytes from 30.30.30.1: icmp_seq=1 ttl=62 time=1391 ms
-80 bytes from 30.30.30.1: icmp_seq=2 ttl=62 time=1413 ms
-80 bytes from 30.30.30.1: icmp_seq=3 ttl=62 time=1431 ms
-80 bytes from 30.30.30.1: icmp_seq=4 ttl=62 time=1452 ms
-80 bytes from 30.30.30.1: icmp_seq=5 ttl=62 time=1461 ms
-
---- 30.30.30.1 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time 53ms
-rtt min/avg/max/mdev = 1391.088/1430.101/1461.522/25.778 ms, pipe 5, ipg/ewma 1s
-```
-Пинг проходит через Vxlan тонель поверх ipv6 фабрики в топологии с all-active мультихоум подключением.
-
-### 5.4 Проверка мультихоум esi сегментов
-
-```
-LEAF-1#show bgp evpn instance
-EVPN instance: VLAN 100
-  Route distinguisher: 0:0
-  Route target import: Route-Target-AS:65101:19100
-  Route target export: Route-Target-AS:65101:19100
-  Service interface: VLAN-based
-  Local VXLAN IP address: fd00:cafe:beef:1::1
-  VXLAN: enabled
-  MPLS: disabled
-  Local ethernet segment:
-    ESI: 0000:0000:0000:0000:1111
-      Interface: Port-Channel1
-      Mode: all-active
-      State: up
-      ES-Import RT: 00:00:00:00:11:11
-      DF election algorithm: modulus
-      Designated forwarder: fd00:cafe:beef:1::1
-      Non-Designated forwarder: fd00:cafe:beef:1::2
-
-```
-Видим, что в сегменте leaf-1,leaf-2 выбран в качестве DF leaf-1. А в сегменте leaf-3,leaf-4 выбран leaf-3 в качестве DF
-
-### 6 Тесты
-
-### 6.1 Отключение LEAF-01
-```
----------------------------------------------------------------------------------------------------------------------------------------
-Отключаем leaf-01 и проверяем что у leaf-03 остался один путь 
----------------------------------------------------------------------------------------------------------------------------------------
-LEAF-3(config)#show ip route vrf vrf-red
-
-VRF: vrf-red
-Codes: C - connected, S - static, K - kernel,
-       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
-       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
-       N2 - OSPF NSSA external type2, B - Other BGP Routes,
-       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
-       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
-       A O - OSPF Summary, NG - Nexthop Group Static Route,
-       V - VXLAN Control Service, M - Martian,
-       DH - DHCP client installed default route,
-       DP - Dynamic Policy Route, L - VRF Leaked,
-       G  - gRIBI, RC - Route Cache Route
-
-Gateway of last resort is not set
-
- B E      10.10.10.0/24 [20/0] via VTEP fd00:cafe:beef:1::2 VNI 3089 router-mac 50:00:00:03:37:66 local-interface Vxlan1
- C        30.30.30.0/24 is directly connected, Vlan300
----------------------------------------------------------------------------------------------------------------------------------------
-проверям связь между клиентами 
----------------------------------------------------------------------------------------------------------------------------------------
-
-CLIENTS-01#ping 30.30.30.1
-PING 30.30.30.1 (30.30.30.1) 72(100) bytes of data.
-80 bytes from 30.30.30.1: icmp_seq=1 ttl=62 time=507 ms
-80 bytes from 30.30.30.1: icmp_seq=2 ttl=62 time=626 ms
-80 bytes from 30.30.30.1: icmp_seq=3 ttl=62 time=638 ms
-80 bytes from 30.30.30.1: icmp_seq=4 ttl=62 time=758 ms
-80 bytes from 30.30.30.1: icmp_seq=5 ttl=62 time=783 ms
-
----------------------------------------------------------------------------------------------------------------------------------------
-Проверяем Local ethernet segment
----------------------------------------------------------------------------------------------------------------------------------------
-
-LEAF-2#show bgp evpn instance
-EVPN instance: VLAN 100
-  Route distinguisher: 0:0
-  Route target import: Route-Target-AS:65101:19100
-  Route target export: Route-Target-AS:65101:19100
-  Service interface: VLAN-based
-  Local VXLAN IP address: fd00:cafe:beef:1::2
-  VXLAN: enabled
-  MPLS: disabled
-  Local ethernet segment:
-    ESI: 0000:0000:0000:0000:1111
-      Interface: Port-Channel1
-      Mode: all-active
-      State: up
-      ES-Import RT: 00:00:00:00:11:11
-      Designated forwarder: fd00:cafe:beef:1::2
-
-
-```
-Видим что резервирование отработало. На leaf-03 остался только один маршрут к 10.10.10.0/24, leaf-2 остался один в паре MH
-
-### 6.2 Отключение даунлинков на SPINE в сторону LEAF-2
-```
----------------------------------------------------------------------------------------------------------------------------------------
-Проверяем ink tracking group UPLINKS на LEAF-2
----------------------------------------------------------------------------------------------------------------------------------------
-
-LEAF-2#show link tracking group UPLINKS
-   Link State Group    Status
----------------------- ------
-   UPLINKS                 up
-
----------------------------------------------------------------------------------------------------------------------------------------
-Выключаем порты eth2 на спайнах
----------------------------------------------------------------------------------------------------------------------------------------
-SPINE-1(config-if-Et2)#show int description
-Interface                      Status         Protocol           Description
-Et1                            up             up                 TO-LEAF-1
-Et2                            admin down     down               TO-LEAF-2
-Et3                            up             up                 TO-LEAF-3
-Et4                            up             up                 TO-LEAF-04
-
-
-SPINE-2(config-if-Et2)#show int description
-Interface                      Status         Protocol           Description
-Et1                            up             up                 TO-LEAF-1
-Et2                            admin down     down               TO-LEAF-2
-Et3                            up             up                 TO-LEAF-3
-Et4                            up             up                 TO-LEAF-04
-
----------------------------------------------------------------------------------------------------------------------------------------
-Проверяем link tracking group UPLINKS на LEAF-2
----------------------------------------------------------------------------------------------------------------------------------------
-
-LEAF-2#show link tracking group UPLINKS
-   Link State Group    Status
----------------------- ------
-   UPLINKS               down
-
-LEAF-2#show interfaces po1
-Port-Channel1 is down, line protocol is down (errdisabled)
-  Hardware is Port-Channel, address is 5000.0004.0004
-  Description: TO_CLIENTS-01
-  Ethernet MTU 9214 bytes
-  Full-duplex, Unconfigured
-  Active members in this channel: 0
-  Fallback mode is: off
-  Down 17 seconds
-  4 link status changes since last clear
-  Last clearing of "show interface" counters never
-  5 minutes input rate 0 bps (- with framing overhead), 0 packets/sec
-  5 minutes output rate 0 bps (- with framing overhead), 0 packets/sec
-     1095 packets input, 139397 bytes
-     Received 0 broadcasts, 277 multicast
-     0 input errors, 0 input discards
-     2759 packets output, 346395 bytes
-     Sent 1 broadcasts, 2278 multicast
-     0 output errors, 0 output discards
-
-```
-Видим, что защита от падения аплников сработала на leaf-02 

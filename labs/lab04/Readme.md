@@ -50,6 +50,7 @@
 - **AS SPINE** Для спайн выделим AS `65000`
 - **AS LEAF** Для лиф выделим диапазон AS `65100-65200`. Так как каждый лиф находится в своей AS
 - **ipv6** Для работы ipv6 маршрутизации включим ipv6 unicast-routing
+- **multi-agent** Для работы несколько AFI\SAFI включим на каждом коммутаторе - service routing protocols model multi-agent
  
 
 
